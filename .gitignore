@@ -1,0 +1,5 @@
+node_modules/
+.DS_Store
+# app do Dock é gerado localmente (veja README) — não versionar bundle do macOS
+Leilão.app/
+.claude/

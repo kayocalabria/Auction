@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leilão — Monte seu time</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icons/icone.svg">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#0b0f14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Leilão">
+</head>
+<body data-fase="setup">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="icone-martelo" viewBox="0 0 64 64">
+        <g fill="currentColor">
+          <rect x="4" y="52" width="32" height="7" rx="3"/>
+          <rect x="8" y="46" width="24" height="7" rx="3"/>
+          <g transform="rotate(-42 28 22)">
+            <rect x="9" y="13" width="38" height="17" rx="5"/>
+            <rect x="24.5" y="28" width="7" height="30" rx="3"/>
+          </g>
+        </g>
+      </symbol>
+    </defs>
+  </svg>
+
+  <header class="app-header">
+    <div class="brand">
+      <svg class="brand-icone"><use href="#icone-martelo"/></svg>
+      <div class="brand-texto">
+        <span>Leilão</span>
+        <small>Estratégia · Lances · Vitória</small>
+      </div>
+    </div>
+    <div class="header-acoes">
+      <button id="btn-historico-header" class="btn btn-ghost">📜 Histórico</button>
+      <button id="btn-novo-jogo-header" class="btn btn-ghost" hidden>Novo Jogo</button>
+    </div>
+  </header>
+
+  <main id="app">
+
+    <!-- ===================== SETUP / LOBBY ===================== -->
+    <section id="view-setup" class="view">
+      <div class="lobby-layout">
+        <div class="lobby-principal">
+          <div class="card hero">
+            <div class="hero-texto">
+              <h1>Monte seu leilão</h1>
+              <p>Escale os jogadores, escolha os temas e defina as regras. Os itens são sorteados e revelados um a um — estratégia, timing e um bom martelo decidem quem monta o melhor time.</p>
+            </div>
+            <svg class="hero-icone"><use href="#icone-martelo"/></svg>
+          </div>
+
+          <div class="setup-grid">
+            <div class="card card-full card-modo-jogo">
+              <h2>Modo de jogo</h2>
+              <div class="opcoes-modo-jogo">
+                <label class="radio-option modo-jogo-opcao">
+                  <input type="radio" name="modo-jogo" value="local" checked>
+                  <span><strong>🖥️ Local</strong><small>Todo mundo dá lance nesta tela.</small></span>
+                </label>
+                <label class="radio-option modo-jogo-opcao">
+                  <input type="radio" name="modo-jogo" value="sala">
+                  <span><strong>📱 Sala</strong><small>Cada um dá lance pelo próprio celular. Esta tela vira a mesa do leilão (espelhe na TV).</small></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="card" id="card-jogadores">
+              <div id="jogadores-local">
+                <h2>Jogadores</h2>
+                <p class="hint">Toque em um nome para escalar (de 2 a 6). Os nomes ficam salvos para as próximas partidas.</p>
+                <div id="lista-jogadores-salvos" class="lista-jogadores-salvos"></div>
+                <form id="form-add-jogador" class="linha-add">
+                  <input type="text" id="input-novo-jogador" placeholder="Nome do jogador" maxlength="24" autocomplete="off">
+                  <button type="submit" class="btn btn-gold btn-small">Salvar</button>
+                </form>
+                <p id="jogadores-feedback" class="hint"></p>
+              </div>
+
+              <div id="jogadores-sala" class="hidden">
+                <h2>Sala</h2>
+                <div id="sala-sem-servidor" class="hidden">
+                  <p class="hint">O modo sala precisa do servidor do jogo rodando neste computador. Dê dois cliques em <strong>Iniciar Leilão.command</strong> (Mac) ou <strong>Iniciar Leilao.bat</strong> (Windows) na pasta do jogo — ou, no terminal:</p>
+                  <pre class="sala-comando">npm install
+npm start</pre>
+                  <p class="hint">Depois abra <strong>http://localhost:3000</strong> e tente de novo. Não tem o jogo baixado? <a href="https://github.com/kayocalabria/Auction" target="_blank" rel="noopener">github.com/kayocalabria/Auction</a></p>
+                  <button type="button" id="btn-sala-tentar" class="btn btn-ghost btn-small">↻ Tentar conectar</button>
+                </div>
+                <div id="sala-criar" class="hidden">
+                  <p class="hint">Gere um código e peça para cada um abrir o endereço no celular.</p>
+                  <button type="button" id="btn-criar-sala" class="btn btn-primary btn-large btn-block">🎟️ Criar sala</button>
+                </div>
+                <div id="sala-conectando" class="hint hidden">Conectando ao servidor…</div>
+                <div id="sala-painel" class="hidden">
+                  <div class="sala-codigo-bloco">
+                    <div class="sala-codigo-label">Código da sala</div>
+                    <div class="sala-codigo" id="sala-codigo">----</div>
+                    <div class="sala-url">No celular, abra <strong id="sala-url">…</strong></div>
+                  </div>
+                  <div class="sala-qr" id="sala-qr" title="Aponte a câmera do celular"></div>
+                  <div class="sala-roster-titulo">Quem já entrou <span id="sala-contagem" class="hint"></span></div>
+                  <div id="sala-roster" class="sala-roster"></div>
+                  <p id="sala-status" class="hint"></p>
+                  <div id="sala-dica-rede" class="sala-dica-rede hidden">
+                    <strong>Ninguém consegue entrar?</strong>
+                    <ul>
+                      <li>Todos precisam estar no <strong>mesmo Wi-Fi</strong> deste computador (não use dados móveis).</li>
+                      <li>Se o Mac perguntou se o <em>node</em> pode aceitar conexões, precisa <strong>permitir</strong> (Ajustes → Rede → Firewall).</li>
+                      <li>Redes de hotel, empresa ou "convidados" isolam os aparelhos entre si — use o <strong>hotspot de um celular</strong> e conecte o computador nele.</li>
+                      <li>Se aparecerem dois endereços no terminal, tente o outro.</li>
+                    </ul>
+                  </div>
+                  <button type="button" id="btn-encerrar-sala" class="btn btn-ghost btn-small">Encerrar sala</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <h2>Temas do Leilão</h2>
+              <p class="hint">Os itens de todos os temas marcados entram no sorteio.</p>
+              <div id="lista-temas" class="lista-temas"></div>
+            </div>
+
+            <div class="card">
+              <h2>Regras da partida</h2>
+              <label>Orçamento inicial (por jogador)
+                <input type="number" id="input-orcamento" min="1" value="100">
+              </label>
+              <label>Tamanho do time
+                <input type="number" id="input-tamanho-time" min="1" value="4">
+              </label>
+              <div class="opcoes-inline">
+                <label class="radio-option">
+                  <input type="radio" name="regra-time" value="max" checked>
+                  Máximo
+                </label>
+                <label class="radio-option">
+                  <input type="radio" name="regra-time" value="min">
+                  Mínimo
+                </label>
+              </div>
+              <p id="regra-time-info" class="hint"></p>
+              <label>Quantidade de itens no leilão
+                <input type="number" id="input-qtd-itens" min="1" value="13">
+              </label>
+              <small id="sugestao-qtd-itens" class="hint"></small>
+              <label>Tempo do contador regressivo (segundos)
+                <input type="number" id="input-tempo-contador" min="3" max="30" value="20">
+              </label>
+              <label>Botões de lance rápido (incrementos)
+                <input type="text" id="input-incrementos" value="1, 2, 5" placeholder="1, 2, 5" autocomplete="off">
+              </label>
+              <small class="hint">Até 4 valores separados por vírgula. Cada botão soma esse valor ao lance atual.</small>
+            </div>
+
+            <div class="card">
+              <h2>Modo de decisão final</h2>
+              <label class="radio-option">
+                <input type="radio" name="modo-decisao" value="manual">
+                Manual — decidam entre vocês
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="modo-decisao" value="metrica" checked>
+                Automático — por métrica do tema
+              </label>
+              <p id="modo-decisao-info" class="hint"></p>
+            </div>
+
+            <details class="card card-full">
+              <summary>Banco de itens (editável)</summary>
+              <p class="hint">Adicione seus próprios itens — eles ficam salvos para sempre e entram no sorteio.</p>
+              <div id="lista-contagem-temas" class="contagem-temas"></div>
+
+              <form id="form-add-itens">
+                <label>Tema
+                  <select id="select-tema-add"></select>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" id="check-novo-tema">
+                  Criar novo tema
+                </label>
+                <input type="text" id="input-novo-tema-nome" placeholder="Nome do novo tema" hidden>
+                <label>Itens (um por linha — opcionalmente "Nome; nota")
+                  <textarea id="textarea-itens" rows="4" placeholder="Ex: Meu Jogo Favorito; 88"></textarea>
+                </label>
+                <label>...ou envie um arquivo .txt (mesmo formato)
+                  <input type="file" id="input-file-itens" accept=".txt">
+                </label>
+                <button type="submit" class="btn btn-gold">Adicionar ao banco</button>
+                <p id="add-itens-feedback" class="hint"></p>
+              </form>
+            </details>
+          </div>
+        </div>
+
+        <aside class="lobby-lateral">
+          <div class="card">
+            <h2>Próximo leilão</h2>
+            <ul id="resumo-config" class="resumo-lista"></ul>
+            <p id="setup-erro" class="erro-msg"></p>
+            <button id="btn-sortear" class="btn btn-primary btn-large btn-block">🎲 Sortear itens</button>
+          </div>
+
+          <div id="preview-sorteio" class="card hidden">
+            <h2>Sorteio pronto! 🎲</h2>
+            <p id="resumo-sorteio" class="hint"></p>
+            <button id="btn-iniciar-leilao" class="btn btn-primary btn-large btn-block">
+              Iniciar Leilão <svg class="icone"><use href="#icone-martelo"/></svg>
+            </button>
+            <details class="itens-sorteados-detalhes">
+              <summary>Ver e editar itens sorteados (spoiler)</summary>
+              <p class="hint">Corrija nome ou nota antes de começar — a correção também é salva no banco. Use ↻ para trocar por outro item.</p>
+              <div id="lista-itens-sorteados" class="lista-itens-sorteados"></div>
+            </details>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ===================== LEILÃO ===================== -->
+    <section id="view-leilao" class="view">
+      <div class="leilao-header">
+        <div class="rodada-info">Rodada <span id="rodada-atual">1</span> / <span id="rodada-total">12</span></div>
+        <div class="tema-info" id="tema-atual-info"></div>
+        <div class="sala-badge hidden" id="sala-badge" title="Código da sala — quem cair pode entrar de novo com ele"></div>
+        <div class="pulos-info hidden" id="pulos-info" title="Quantos itens ainda podem ir para 'não vendido' sem impedir que todo mundo complete o time"></div>
+        <div class="leilao-header-acoes">
+          <button id="btn-desfazer-lance" class="btn btn-ghost">↶ Desfazer lance</button>
+          <button id="btn-fechar-lance" class="btn btn-gold"><svg class="icone"><use href="#icone-martelo"/></svg> Fechar lance agora</button>
+          <button id="btn-pular-item" class="btn btn-ghost">Pular item</button>
+          <button id="btn-pausar" class="btn btn-ghost">⏸ Pausar</button>
+        </div>
+      </div>
+
+      <div class="leilao-layout">
+        <div class="leilao-principal">
+          <div class="lote-card" id="lote-card">
+            <div class="lote-icon" id="lote-icon">🎮</div>
+            <h2 id="lote-item-nome">—</h2>
+            <div class="lance-atual">
+              <span class="lance-valor" id="lance-atual-valor">R$ 0</span>
+              <span class="lance-lider" id="lance-atual-lider">Nenhum lance ainda</span>
+            </div>
+            <div class="contador-wrapper">
+              <div class="contador-barra"><div class="contador-preenchimento" id="contador-preenchimento"></div></div>
+              <div class="contador-numero" id="contador-numero">8s</div>
+            </div>
+            <div class="lances-historico" id="lances-historico"></div>
+            <div class="pausado-banner hidden" id="pausado-banner">⏸ LEILÃO PAUSADO — clique em "Retomar" quando estiverem prontos</div>
+          </div>
+
+          <div class="lote-card hidden" id="encerramento-antecipado">
+            <div class="lote-icon">🏆</div>
+            <h2>Todos os times já estão completos!</h2>
+            <p class="hint" id="encerramento-texto"></p>
+            <ol class="lista-itens-restantes" id="lista-itens-restantes"></ol>
+            <div class="encerramento-acoes">
+              <button id="btn-encerrar-agora" class="btn btn-primary btn-large">🏁 Encerrar e ver resultado</button>
+              <button id="btn-continuar-leilao" class="btn btn-ghost">Continuar leiloando</button>
+            </div>
+          </div>
+        </div>
+
+        <aside id="lista-jogadores-leilao" class="leilao-lateral" aria-label="Carteira e portfólio dos jogadores"></aside>
+      </div>
+    </section>
+
+    <!-- ===================== RESULTADO ===================== -->
+    <section id="view-resultado" class="view">
+      <div class="card hero-vitoria">
+        <svg class="hero-icone"><use href="#icone-martelo"/></svg>
+        <h1 id="resultado-titulo">Leilão encerrado!</h1>
+        <p id="resultado-subtitulo"></p>
+        <button type="button" id="btn-revelar-indices-resultado" class="btn btn-ghost btn-small hidden">📊 Ver índices oficiais dos itens</button>
+      </div>
+      <div id="ranking-metrica" class="card hidden"></div>
+      <div id="grid-resultado-jogadores" class="resultado-grid"></div>
+      <div class="setup-actions">
+        <button id="btn-novo-jogo" class="btn btn-primary btn-large">Novo Jogo</button>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal-card">
+      <button type="button" id="modal-fechar" class="modal-fechar" aria-label="Fechar">×</button>
+      <h2 id="modal-titulo"></h2>
+      <div id="modal-corpo" class="modal-corpo"></div>
+    </div>
+  </div>
+
+  <div id="reveal-overlay" class="reveal-overlay hidden">
+    <div class="reveal-scene">
+      <div class="reveal-tema-icon" id="reveal-icon">🎮</div>
+      <div class="reveal-item-nome" id="reveal-item-nome">—</div>
+      <div class="reveal-sub" id="reveal-sub"></div>
+    </div>
+  </div>
+
+  <div id="gavel-overlay" class="gavel-overlay hidden">
+    <div class="gavel-scene">
+      <div class="martelo-palco" id="martelo-palco">
+        <svg class="martelo-svg" viewBox="0 0 340 260" aria-hidden="true">
+          <defs>
+            <linearGradient id="gMadeiraTopo" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#d08a4a"/>
+              <stop offset="1" stop-color="#9c5424"/>
+            </linearGradient>
+            <linearGradient id="gMadeiraLado" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#8a4a20"/>
+              <stop offset="1" stop-color="#5e2f12"/>
+            </linearGradient>
+            <linearGradient id="gCabo" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#d69256"/>
+              <stop offset=".5" stop-color="#b3632a"/>
+              <stop offset="1" stop-color="#733a15"/>
+            </linearGradient>
+            <linearGradient id="gCabeca" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#6e3513"/>
+              <stop offset=".3" stop-color="#d69256"/>
+              <stop offset=".6" stop-color="#b3632a"/>
+              <stop offset="1" stop-color="#5e2c10"/>
+            </linearGradient>
+            <linearGradient id="gOuro" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#8f6a1c"/>
+              <stop offset=".35" stop-color="#f3e08a"/>
+              <stop offset=".65" stop-color="#d4af37"/>
+              <stop offset="1" stop-color="#8f6a1c"/>
+            </linearGradient>
+            <linearGradient id="gOuroV" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#8f6a1c"/>
+              <stop offset=".35" stop-color="#f3e08a"/>
+              <stop offset=".65" stop-color="#d4af37"/>
+              <stop offset="1" stop-color="#8f6a1c"/>
+            </linearGradient>
+          </defs>
+
+          <ellipse cx="130" cy="242" rx="112" ry="14" fill="rgba(0,0,0,.45)"/>
+
+          <g class="martelo-base">
+            <ellipse cx="130" cy="236" rx="88" ry="18" fill="#4b2410"/>
+            <rect x="42" y="214" width="176" height="22" fill="url(#gMadeiraLado)"/>
+            <ellipse cx="130" cy="214" rx="88" ry="18" fill="url(#gMadeiraTopo)"/>
+            <ellipse cx="130" cy="214" rx="88" ry="18" fill="none" stroke="url(#gOuro)" stroke-width="3"/>
+            <rect x="58" y="196" width="144" height="18" fill="url(#gMadeiraLado)"/>
+            <ellipse cx="130" cy="196" rx="72" ry="15" fill="url(#gMadeiraTopo)"/>
+            <ellipse cx="130" cy="196" rx="72" ry="15" fill="none" stroke="url(#gOuro)" stroke-width="3"/>
+          </g>
+
+          <ellipse class="martelo-onda" cx="130" cy="184" rx="34" ry="9" fill="none" stroke="#f3e08a" stroke-width="3"/>
+
+          <g class="martelo-gavel">
+            <rect x="125" y="102" width="160" height="16" rx="8" fill="url(#gCabo)"/>
+            <rect x="272" y="99" width="16" height="22" rx="5" fill="url(#gOuroV)"/>
+            <rect x="104" y="50" width="52" height="120" rx="10" fill="url(#gCabeca)"/>
+            <rect x="104" y="96" width="52" height="28" fill="url(#gOuro)"/>
+            <rect x="104" y="60" width="52" height="5" fill="url(#gOuro)" opacity=".9"/>
+            <rect x="104" y="155" width="52" height="5" fill="url(#gOuro)" opacity=".9"/>
+            <path d="M114 68 C120 80 112 88 118 93 M140 128 C134 140 146 146 139 152 M160 108 C175 112 185 108 200 112" stroke="rgba(60,25,5,.35)" stroke-width="1.5" fill="none"/>
+          </g>
+        </svg>
+      </div>
+      <div class="gavel-result-text" id="gavel-result-text"></div>
+    </div>
+  </div>
+
+  <div id="lance-overlay" class="lance-overlay hidden" aria-live="polite">
+    <div class="lance-pop" id="lance-pop">
+      <div class="lance-pop-icone">🔨</div>
+      <div class="lance-pop-nome" id="lance-pop-nome">—</div>
+      <div class="lance-pop-valor" id="lance-pop-valor">R$ 0</div>
+      <div class="lance-pop-sub">deu um lance!</div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+  <script src="vendor/qrcode.js"></script>
+  <script src="sala.js"></script>
+  <script>
+    if ("serviceWorker" in navigator && location.protocol !== "file:") {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    }
+  </script>
+</body>
+</html>

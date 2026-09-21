@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Leilão — Dar lance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="play.css">
+<link rel="icon" type="image/svg+xml" href="icons/icone.svg">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Leilão">
+</head>
+<body data-tela="entrar">
+
+  <div id="banner-conexao" class="banner-conexao hidden"></div>
+
+  <!-- ===================== ENTRAR ===================== -->
+  <section id="tela-entrar" class="tela">
+    <div class="marca">
+      <div class="marca-icone">🔨</div>
+      <h1>Leilão</h1>
+      <p>Entre na sala que está na TV</p>
+    </div>
+    <form id="form-entrar" class="form-entrar" autocomplete="off">
+      <label>Código da sala
+        <input type="text" id="input-codigo" inputmode="latin" autocapitalize="characters" autocorrect="off" spellcheck="false" maxlength="4" placeholder="ABCD" required>
+      </label>
+      <label>Seu nome
+        <input type="text" id="input-nome" maxlength="24" placeholder="Como te chamam?" required>
+      </label>
+      <p id="entrar-erro" class="erro"></p>
+      <button type="submit" id="btn-entrar" class="btn btn-primario btn-gigante">Entrar</button>
+    </form>
+  </section>
+
+  <!-- ===================== ESPERA (lobby) ===================== -->
+  <section id="tela-espera" class="tela">
+    <div class="marca compacta">
+      <div class="marca-icone">🔨</div>
+      <h1>Você está na sala!</h1>
+      <p>Sala <strong id="espera-codigo">----</strong> · olhe para a TV</p>
+    </div>
+    <div class="card">
+      <div class="card-titulo">Quem já entrou</div>
+      <ul id="espera-lista" class="lista-jogadores"></ul>
+    </div>
+    <p class="aguardando"><span class="pulso"></span> Aguardando o host iniciar o leilão…</p>
+    <button type="button" id="btn-sair" class="btn btn-fantasma">Sair da sala</button>
+  </section>
+
+  <!-- ===================== LEILÃO ===================== -->
+  <section id="tela-leilao" class="tela">
+    <header class="topo">
+      <span id="topo-rodada">Rodada 1/12</span>
+      <span id="topo-nome" class="topo-nome">—</span>
+      <span class="topo-direita"><span id="topo-sala">Sala ----</span><button type="button" id="btn-som" class="btn-som" aria-label="Som">🔔</button></span>
+    </header>
+
+    <div class="item">
+      <div class="item-tema" id="item-tema">🎮 Jogos</div>
+      <div class="item-nome" id="item-nome">—</div>
+    </div>
+
+    <div class="placar">
+      <div class="placar-bloco">
+        <span class="placar-label">Lance atual</span>
+        <span class="placar-valor" id="lance-atual">R$ 0</span>
+        <span class="placar-sub" id="lance-lider">Nenhum lance ainda</span>
+      </div>
+      <div class="placar-bloco">
+        <span class="placar-label">Sua carteira</span>
+        <span class="placar-valor" id="carteira">R$ 0</span>
+        <span class="placar-sub" id="carteira-sub">Time 0/4</span>
+      </div>
+    </div>
+
+    <div class="contador">
+      <div class="contador-barra"><div class="contador-preenchimento" id="contador-preenchimento"></div></div>
+      <div class="contador-numero" id="contador-numero">8s</div>
+    </div>
+
+    <div class="aviso" id="aviso"></div>
+
+    <div class="botoes-lance" id="botoes-lance"></div>
+
+    <form class="lance-livre" id="form-lance-livre" novalidate>
+      <input type="number" id="input-lance-livre" inputmode="numeric" pattern="[0-9]*" min="1" step="1" placeholder="Outro valor">
+      <button type="submit" id="btn-lance-livre" class="btn btn-secundario">Dar lance</button>
+    </form>
+
+    <footer class="rodape-time">
+      <span class="rodape-label">Seu time</span>
+      <span id="meu-time">—</span>
+    </footer>
+
+    <div id="overlay-estado" class="overlay-estado hidden">
+      <div class="overlay-icone" id="overlay-icone">🔨</div>
+      <div class="overlay-titulo" id="overlay-titulo">—</div>
+      <div class="overlay-sub" id="overlay-sub"></div>
+    </div>
+  </section>
+
+  <!-- ===================== RESULTADO ===================== -->
+  <section id="tela-resultado" class="tela">
+    <div class="marca compacta">
+      <div class="marca-icone" id="resultado-icone">🏁</div>
+      <h1 id="resultado-titulo">Leilão encerrado!</h1>
+      <p id="resultado-sub"></p>
+    </div>
+    <div class="card" id="resultado-ranking"></div>
+    <div class="card">
+      <div class="card-titulo">Seu time</div>
+      <ul id="resultado-meu-time" class="lista-itens"></ul>
+    </div>
+    <p class="aguardando"><span class="pulso"></span> Aguardando o host começar outro leilão…</p>
+  </section>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="play.js"></script>
+  <script>
+    if ("serviceWorker" in navigator && location.protocol !== "file:") {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    }
+  </script>
+</body>
+</html>
