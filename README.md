@@ -40,6 +40,26 @@ nesse caso use o hotspot de um celular e conecte o computador nele.
 Recarregou a página principal? A sala volta sozinha. Celular bloqueou a tela ou
 caiu o Wi-Fi? Ele volta para a partida sozinho.
 
+### Um celular Android como servidor (sem computador)
+
+Um celular **Android** pode ser a "mesa" do leilão sozinho — servidor, host e
+jogador ao mesmo tempo — usando o [Termux](https://f-droid.org/packages/com.termux/)
+(baixe pelo **F-Droid**; a versão da Play Store está descontinuada). Não funciona
+em iPhone — o iOS não deixa apps de terceiros rodarem esse tipo de servidor.
+
+```
+pkg update && pkg install -y git
+git clone https://github.com/kayocalabria/Auction
+cd Auction
+bash iniciar-termux.sh
+```
+
+Nas próximas vezes é só `cd Auction && bash iniciar-termux.sh` (ou `npm run termux`).
+O script instala o resto sozinho e avisa sobre manter o Termux aberto, desativar
+a otimização de bateria para ele (Ajustes → Apps → Termux → Bateria → Sem
+restrições) e, se não tiver Wi-Fi por perto, ligar o **hotspot do próprio
+celular** para os outros se conectarem nele.
+
 ### Atalho no Dock (Mac)
 
 Na pasta do jogo existe `Leilão.app` (gerado localmente, não vai para o Git).

@@ -438,10 +438,26 @@ servidor.listen(PORT, "0.0.0.0", () => {
 });
 
 // abre a tela principal no navegador padrão (usado pelos atalhos de um clique)
+function emTermux() {
+  return !!(process.env.PREFIX && process.env.PREFIX.includes("com.termux"));
+}
+
 function abrirNavegador(url) {
-  const cmd = process.platform === "darwin" ? ["open", [url]] : process.platform === "win32" ? ["cmd", ["/c", "start", "", url]] : ["xdg-open", [url]];
+  // Termux (Android) não tem "open"/"xdg-open" — usa o comando do Termux:API,
+  // que só existe se o pacote termux-api (e o app companheiro) estiver instalado.
+  const cmd = emTermux()
+    ? ["termux-open-url", [url]]
+    : process.platform === "darwin"
+    ? ["open", [url]]
+    : process.platform === "win32"
+    ? ["cmd", ["/c", "start", "", url]]
+    : ["xdg-open", [url]];
   try {
-    spawn(cmd[0], cmd[1], { stdio: "ignore", detached: true }).unref();
+    const proc = spawn(cmd[0], cmd[1], { stdio: "ignore", detached: true });
+    // sem esse listener, um comando ausente (ex.: termux-open-url sem o Termux:API)
+    // derruba o processo inteiro com um erro não tratado
+    proc.on("error", () => console.log(`  (não consegui abrir o navegador sozinho — abra ${url})`));
+    proc.unref();
   } catch (e) {
     console.log(`  (não consegui abrir o navegador sozinho — abra ${url})`);
   }

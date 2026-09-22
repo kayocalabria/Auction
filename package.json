@@ -6,7 +6,8 @@
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
-    "abrir": "node server/index.js --abrir"
+    "abrir": "node server/index.js --abrir",
+    "termux": "bash iniciar-termux.sh"
   },
   "dependencies": {
     "ws": "^8.18.0"
