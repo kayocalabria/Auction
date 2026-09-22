@@ -7,13 +7,13 @@ IMDb…) é revelada e o time com a maior soma vence.
 
 **Jogar agora (modo local, qualquer aparelho):** https://kayocalabria.github.io/Auction/
 
-## Dois modos de jogo
+## Três formas de jogar
 
-| | Local | Sala (celulares) |
-|---|---|---|
-| Como funciona | Todo mundo dá lance numa tela só | Cada um dá lance pelo próprio celular; a tela principal vai para a TV |
-| Precisa instalar? | Não — abre no navegador, funciona offline | Sim — o servidor roda no computador da sala |
-| Onde | Link acima, ou `index.html` | `Iniciar Leilão.command` / `npm start` |
+| | Local | Sala — rede local | Sala — online |
+|---|---|---|---|
+| Como funciona | Todo mundo dá lance numa tela só | Cada um dá lance pelo próprio celular; a tela principal vai para a TV | Igual à sala local, mas de qualquer rede |
+| Precisa instalar? | Não — abre no navegador, funciona offline | Sim — o servidor roda num computador ou Android da sala | Não — o servidor já fica no ar na nuvem |
+| Onde | Link acima, ou `index.html` | `Iniciar Leilão.command` / `iniciar-termux.sh` | Deploy grátis no Render — [ver abaixo](#online-fora-da-rede-local--qualquer-aparelho-qualquer-rede) |
 
 O jogo é um PWA: no celular ou no computador, use "Adicionar à tela de início" /
 "Instalar app" no navegador e ele vira um app com ícone, sem barra de endereço.
@@ -89,12 +89,26 @@ docker build -t leilao .
 docker run -p 3000:3000 leilao
 ```
 
-### Online (fora da rede local)
+### Online (fora da rede local — qualquer aparelho, qualquer rede)
 
-O mesmo servidor roda em qualquer host Node (Render, Railway, Fly.io…): basta
-publicar o repositório e apontar para `node server/index.js`; ele respeita a
-variável `PORT`. Aí o host e os celulares acessam a URL pública — sem precisar
-estar na mesma rede.
+Com o servidor publicado na nuvem, ninguém precisa rodar nada: qualquer
+celular (inclusive iPhone) abre a URL e cria a sala. O plano grátis do Render
+"dorme" depois de 15 min sem uso — o primeiro acesso do dia demora uns 30s
+pra acordar, o resto é instantâneo.
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/kayocalabria/Auction)
+
+1. Clique no botão acima → entre com sua conta GitHub → autorize o Render a
+   ler o repositório `kayocalabria/Auction`.
+2. O Render lê o `render.yaml` deste projeto e já vem configurado (plano
+   grátis, Dockerfile, nome do serviço) — só clique em **Apply**.
+3. Em ~2–5 min o serviço fica no ar em `https://leilao-auction.onrender.com`
+   (o Render mostra a URL exata — se o nome já estiver em uso por outra
+   conta, ele sugere um parecido).
+
+Sem o botão, o mesmo servidor roda em qualquer host Node (Railway, Fly.io…):
+basta apontar para `node server/index.js`; ele já respeita a variável `PORT`
+sozinho.
 
 ## Como funciona por dentro
 

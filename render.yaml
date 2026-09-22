@@ -1,0 +1,14 @@
+# "Blueprint" do Render: New + -> Blueprint -> conectar este repositório ->
+# Apply. O Render lê este arquivo e configura o serviço sozinho (nome,
+# plano grátis, Dockerfile) — sem precisar preencher formulário.
+services:
+  - type: web
+    name: leilao-auction
+    env: docker
+    plan: free
+    region: ohio
+    autoDeploy: true
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
