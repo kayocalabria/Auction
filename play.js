@@ -33,6 +33,9 @@ const APP = {
   ultimaRodada: null,
 };
 
+let modalTimesAberto = false; // "Ver todos os times" (durante o leilão)
+let notasReveladas = false; // "Ver notas" no resultado (modo manual)
+
 /* ---------- utilidades ---------- */
 function $(id) {
   return document.getElementById(id);
@@ -40,6 +43,11 @@ function $(id) {
 
 function fmtMoeda(v) {
   return `R$ ${Number(v || 0).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}`;
+}
+
+function fmtMetric(valor, max) {
+  if (typeof valor !== "number") return "";
+  return max ? `${valor}/${max}` : String(valor);
 }
 
 function escapeHtml(str) {
@@ -318,12 +326,15 @@ function receberEstado(estado) {
   APP.estado = estado;
   APP.recebidoEm = Date.now();
 
+  if (modalTimesAberto && estado.fase !== "leilao") fecharModalTimes();
+
   if (estado.fase === "leilao") {
     detectarSuperado(anterior, estado);
     detectarArremate(anterior, estado);
     renderLeilao();
     mostrarTela("leilao");
     WAKE.pedir();
+    if (modalTimesAberto) renderModalTimes();
   } else if (estado.fase === "resultado") {
     pararContador();
     renderResultado(anterior);
@@ -519,6 +530,48 @@ function renderOverlay(e, me) {
   ov.classList.add("hidden");
 }
 
+/* ---------- modal: times de todo mundo ---------- */
+function abrirModalTimes() {
+  if (!APP.estado || APP.estado.fase !== "leilao") return;
+  modalTimesAberto = true;
+  renderModalTimes();
+  $("modal-times").classList.remove("hidden");
+}
+
+function fecharModalTimes() {
+  modalTimesAberto = false;
+  $("modal-times").classList.add("hidden");
+}
+
+function renderModalTimes() {
+  const e = APP.estado;
+  const lista = $("modal-times-lista");
+  const jogadores = (e && e.jogadores) || [];
+  if (!jogadores.length) {
+    lista.innerHTML = '<p class="modal-time-vazio">Ninguém na partida.</p>';
+    return;
+  }
+  lista.innerHTML = jogadores
+    .map((j, i) => {
+      const souEu = j.id === APP.token;
+      const ehLider = e.liderId && j.id === e.liderId;
+      const badges =
+        j.itens && j.itens.length
+          ? j.itens.map((it) => `<span class="modal-time-badge">${escapeHtml(it.nome)} · ${fmtMoeda(it.valor)}</span>`).join("")
+          : '<span class="modal-time-vazio">nenhum item ainda</span>';
+      return `
+        <div class="modal-time-item${souEu ? " eu" : ""}${ehLider ? " lider" : ""}">
+          <div class="modal-time-nome"><span class="cor-ponto" style="--cor:${CORES[i % CORES.length]}"></span>${ehLider ? "👑 " : ""}${escapeHtml(j.nome)}${souEu ? " (você)" : ""}</div>
+          <div class="modal-time-sub">
+            <span>💰 ${fmtMoeda(j.carteira)}</span>
+            <span>${j.timeCheio ? "✓ Time completo" : "Time em aberto"}</span>
+          </div>
+          <div class="modal-time-badges">${badges}</div>
+        </div>`;
+    })
+    .join("");
+}
+
 /* ---------- contador (anima localmente a partir do último snapshot) ---------- */
 function iniciarContador() {
   pararContador();
@@ -594,6 +647,7 @@ function receberResultadoLance(msg) {
 function renderResultado(anterior) {
   const e = APP.estado;
   const primeiraVez = !anterior || anterior.fase !== "resultado";
+  if (primeiraVez) notasReveladas = false;
   const r = e.resultado;
   const me = eu();
   const titulo = $("resultado-titulo");
@@ -630,11 +684,55 @@ function renderResultado(anterior) {
     rankingEl.classList.add("hidden");
   }
 
-  const lista = $("resultado-meu-time");
-  const itens = me ? me.itens : [];
-  lista.innerHTML = itens.length
-    ? itens.map((i) => `<li><span>${escapeHtml(i.nome)}</span><strong>${fmtMoeda(i.valor)}</strong></li>`).join("")
-    : '<li style="color:var(--texto-secundario)">Você não arrematou nenhum item.</li>';
+  renderTodosOsTimes(e, r);
+}
+
+// Mostra, para CADA jogador (não só você), os itens que arrematou e o quanto
+// cada um pontuou — pra dar pra entender de onde veio (ou faltou) pontuação.
+function renderTodosOsTimes(e, r) {
+  const cont = $("resultado-times");
+  const btnRevelar = $("btn-revelar-notas");
+  const modoMetrica = !!(r && r.modoMetrica);
+  const lista = (r && r.ranking) || [];
+  const melhor = r ? r.melhorPontuacao : null;
+  const orcamento = (e.config && e.config.orcamentoInicial) || 0;
+  const metricMax = r ? r.metricMax : null;
+
+  btnRevelar.classList.toggle("hidden", modoMetrica);
+  cont.classList.toggle("notas-ocultas", !modoMetrica && !notasReveladas);
+
+  cont.innerHTML = lista
+    .map((x) => {
+      const souEu = x.id === APP.token;
+      const campeao = modoMetrica && x.pontuacao !== null && x.pontuacao === melhor;
+      const saldo = orcamento - x.gasto;
+      const itensHtml = x.itens.length
+        ? x.itens
+            .map((i) => {
+              const metricTxt = fmtMetric(i.metric, metricMax);
+              return `<li><span>${escapeHtml(i.nome)} <span style="color:var(--texto-secundario)">(${fmtMoeda(i.valor)})</span></span>${
+                metricTxt ? `<span class="resultado-item-metric">${metricTxt}</span>` : ""
+              }</li>`;
+            })
+            .join("")
+        : '<li class="modal-time-vazio">Nenhum item arrematado.</li>';
+      const pontosTxt = x.pontuacao !== null ? x.pontuacao.toLocaleString("pt-BR", { maximumFractionDigits: 1 }) : "—";
+
+      return `
+        <div class="resultado-time-card${souEu ? " eu" : ""}${campeao ? " campeao" : ""}">
+          <div class="resultado-time-header">
+            <span class="resultado-time-nome">${campeao ? "🏆 " : ""}${escapeHtml(x.nome)}${souEu ? " (você)" : ""}</span>
+            <span class="resultado-time-status ${x.completo ? "completo" : "incompleto"}">${x.completo ? "Time completo" : "Incompleto"}</span>
+          </div>
+          <div class="resultado-time-financas">
+            <span>Gasto: ${fmtMoeda(x.gasto)}</span>
+            <span>Saldo: ${fmtMoeda(saldo)}</span>
+            ${modoMetrica ? `<span>Pontos: ${pontosTxt}</span>` : ""}
+          </div>
+          <ul class="resultado-time-itens">${itensHtml}</ul>
+        </div>`;
+    })
+    .join("");
 }
 
 /* ---------- entrar / sair ---------- */
@@ -699,6 +797,14 @@ document.addEventListener("DOMContentLoaded", () => {
   $("btn-sair").addEventListener("click", sair);
   $("btn-som").addEventListener("click", () => SOM.alternar());
   renderBotaoSom();
+  $("btn-ver-times").addEventListener("click", abrirModalTimes);
+  $("btn-fechar-times").addEventListener("click", fecharModalTimes);
+  $("modal-times-backdrop").addEventListener("click", fecharModalTimes);
+  $("btn-revelar-notas").addEventListener("click", () => {
+    notasReveladas = true;
+    $("btn-revelar-notas").classList.add("hidden");
+    $("resultado-times").classList.remove("notas-ocultas");
+  });
   $("form-lance-livre").addEventListener("submit", (ev) => {
     ev.preventDefault();
     const input = $("input-lance-livre");

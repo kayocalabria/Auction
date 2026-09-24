@@ -96,6 +96,7 @@
     <footer class="rodape-time">
       <span class="rodape-label">Seu time</span>
       <span id="meu-time">—</span>
+      <button type="button" id="btn-ver-times" class="btn-ver-times" aria-label="Ver todos os times">👥</button>
     </footer>
 
     <div id="overlay-estado" class="overlay-estado hidden">
@@ -104,6 +105,18 @@
       <div class="overlay-sub" id="overlay-sub"></div>
     </div>
   </section>
+
+  <!-- ===================== MODAL: times de todo mundo (durante o leilão) ===================== -->
+  <div id="modal-times" class="modal-times hidden">
+    <div class="modal-times-backdrop" id="modal-times-backdrop"></div>
+    <div class="modal-times-card" role="dialog" aria-label="Times de todo mundo">
+      <div class="modal-times-header">
+        <span>👥 Times de todo mundo</span>
+        <button type="button" id="btn-fechar-times" class="modal-times-fechar" aria-label="Fechar">×</button>
+      </div>
+      <div id="modal-times-lista" class="modal-times-lista"></div>
+    </div>
+  </div>
 
   <!-- ===================== RESULTADO ===================== -->
   <section id="tela-resultado" class="tela">
@@ -114,8 +127,11 @@
     </div>
     <div class="card" id="resultado-ranking"></div>
     <div class="card">
-      <div class="card-titulo">Seu time</div>
-      <ul id="resultado-meu-time" class="lista-itens"></ul>
+      <div class="card-titulo-linha">
+        <div class="card-titulo">Todos os times</div>
+        <button type="button" id="btn-revelar-notas" class="btn-revelar-notas hidden">👁 Ver notas</button>
+      </div>
+      <div id="resultado-times" class="resultado-times"></div>
     </div>
     <p class="aguardando"><span class="pulso"></span> Aguardando o host começar outro leilão…</p>
   </section>

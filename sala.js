@@ -435,6 +435,7 @@ const SALA = {
       base.resultado = {
         modoMetrica: !!r.modoMetrica,
         metricLabel: r.meta ? r.meta.metricLabel : null,
+        metricMax: r.meta ? r.meta.metricMax : null,
         melhorPontuacao: r.melhorPontuacao,
         ranking: r.ranking.map((x) => ({
           id: x.jogador.salaId,
